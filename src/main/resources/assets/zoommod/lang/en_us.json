@@ -1,0 +1,6 @@
+{
+  "key.zoom": "Zoom Keybind",
+  "category.zoom": "WAIZA",
+  "keybind.title.zoom": "Key is in Conflict with WAIZA!",
+  "keybind.desc.zoom": "Something else shares the same key!"
+}

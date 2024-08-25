@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "zoommod",
+	"version": "${version}",
+	"name": "WAIZA",
+	"description": "The Enhanced WAIZA Mod allows players to fine-tune their zoom settings in Minecraft, providing a more immersive and customizable experience. Easily adjust zoom speed, default zoom levels, and enjoy a smooth, responsive zoom functionality with this mod.",
+	"authors": [
+		"Elias"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/zoommod/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"client": [
+			"elias.zoom.client.ZoomModClient"
+		],
+
+		"main": [
+			"elias.zoom.ZoomMod"
+		]
+	},
+	"mixins": [
+		"zoommod.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.2",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}

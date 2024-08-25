@@ -1,0 +1,14 @@
+{
+	"required": true,
+	"package": "elias.zoom.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"GameoptionAcc",
+		"MousewheelAcc"
+	],
+	"client": [
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
