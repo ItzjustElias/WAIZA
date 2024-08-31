@@ -1,0 +1,6 @@
+{
+  "key.zoom": "Raccourci Zoom",
+  "category.zoom": "WAIZA",
+  "keybind.title.zoom": "Le raccourci est en conflit avec WAIZA!",
+  "keybind.desc.zoom": "Quelque chose d'autre utilise la même touche!"
+}

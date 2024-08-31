@@ -1,15 +1,17 @@
 package elias.zoom.client;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.TitleScreen;
+import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.toast.SystemToast;
 import net.minecraft.client.toast.ToastManager;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.option.KeyBinding;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
@@ -23,7 +25,7 @@ import java.util.Properties;
 
 public class ZoomModClient implements ClientModInitializer {
 
-    private static final String CONFIG_DIR = MinecraftClient.getInstance().runDirectory.getPath() + "/ZoomMod";
+    private static final String CONFIG_DIR = new File("").getAbsolutePath() + "/WAIZA-Config";
     private static final String CONFIG_FILE = CONFIG_DIR + "/config.properties";
 
     private static boolean CHECKED_KEYBINDING = false;
@@ -38,6 +40,9 @@ public class ZoomModClient implements ClientModInitializer {
     private static double ZOOM_SMOOTHING;
     private static double INSTANT_ZOOM_INCREMENT;
     private static double DEFAULT_ZOOM_LEVEL;
+    private static double ZOOM_SPEED;
+
+    private static boolean ENABLE_ZOOM_SOUND;
 
     private static double targetZoomLevel;
     private static double zoomLevel;
@@ -93,6 +98,8 @@ public class ZoomModClient implements ClientModInitializer {
                 props.setProperty("zoom_smoothing", "0.05");
                 props.setProperty("instant_zoom_increment", "0.1");
                 props.setProperty("default_zoom_level", "0.23");
+                props.setProperty("zoom_speed", "0.5"); // Default zoom speed
+                props.setProperty("enable_zoom_sound", "false"); // Default zoom sound disable
 
                 FileWriter writer = new FileWriter(configFile);
                 props.store(writer, "ZoomMod Configuration");
@@ -118,6 +125,8 @@ public class ZoomModClient implements ClientModInitializer {
             ZOOM_SMOOTHING = Double.parseDouble(props.getProperty("zoom_smoothing", "0.05"));
             INSTANT_ZOOM_INCREMENT = Double.parseDouble(props.getProperty("instant_zoom_increment", "0.1"));
             DEFAULT_ZOOM_LEVEL = Double.parseDouble(props.getProperty("default_zoom_level", "0.23"));
+            ZOOM_SPEED = Double.parseDouble(props.getProperty("zoom_speed", "0.5")); // Load zoom speed
+            ENABLE_ZOOM_SOUND = Boolean.parseBoolean(props.getProperty("enable_zoom_sound", "true")); // Load zoom sound setting
 
             targetZoomLevel = DEFAULT_ZOOM_LEVEL;
             zoomLevel = targetZoomLevel;
@@ -177,20 +186,36 @@ public class ZoomModClient implements ClientModInitializer {
         // Handle zoom level change based on key press state
         if (isPressed && !keyPressedLastFrame) {
             targetZoomLevel = Math.min(targetZoomLevel + ZOOM_INCREMENT, MAX_ZOOM);
+            if (ENABLE_ZOOM_SOUND) playZoomSound(); // Play zoom in sound
         } else if (!isPressed && keyPressedLastFrame) {
             // Reset to default zoom level when key is released
             targetZoomLevel = DEFAULT_ZOOM_LEVEL;
         }
 
         // Apply smoothing effect to the zoom level
+        double zoomStep = ZOOM_SMOOTHING * ZOOM_SPEED; // Apply zoom speed multiplier
         if (zoomLevel < targetZoomLevel) {
-            zoomLevel = Math.min(zoomLevel + ZOOM_SMOOTHING, targetZoomLevel);
+            zoomLevel = Math.min(zoomLevel + zoomStep, targetZoomLevel);
         } else if (zoomLevel > targetZoomLevel) {
-            zoomLevel = Math.max(zoomLevel - ZOOM_SMOOTHING, targetZoomLevel);
+            zoomLevel = Math.max(zoomLevel - zoomStep, targetZoomLevel);
         }
 
         keyPressedLastFrame = isPressed;
     }
+
+    private static void playZoomSound() {
+        if (mc.player != null && mc.world != null) {
+            mc.world.playSound(
+                    mc.player.getX(), mc.player.getY(), mc.player.getZ(),  // The player's current position
+                    SoundEvents.UI_TOAST_OUT,  // The sound event
+                    SoundCategory.PLAYERS,     // The sound category
+                    0.5F,                      // Volume
+                    1.0F,                      // Pitch
+                    false                      // Whether the sound is distant
+            );
+        }
+    }
+
 
     public static void manageSmoothCamera() {
         if (zoomStarting()) {
