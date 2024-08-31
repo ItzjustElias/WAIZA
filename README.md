@@ -51,7 +51,14 @@ Launch the game once to generate the configuration file, then adjust settings in
 2. Adjust the zoom settings via the configuration file to tailor the zoom experience to your liking.
 
 ## languages supported:
+WAIZA supports the following languages:
 
+- English
+- Spanish
+- Italian
+- French
+- German
+- More to come...
    
 ## License
 This mod is licensed under Creative Commons Zero v1.0 Universal license. You are free to share, copy, and redistribute the material in any medium or format, and to adapt, remix, transform, and build upon the material for any purpose, even commercially, under the following terms:
