@@ -21,6 +21,9 @@
 
 		"main": [
 			"elias.zoom.ZoomMod"
+		],
+		"modmenu": [
+			"elias.zoom.client.ModMenuIntegration"
 		]
 	},
 	"mixins": [

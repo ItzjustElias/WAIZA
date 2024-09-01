@@ -1,0 +1,10 @@
+{
+  "zoomIncrement": 0.05,
+  "maxZoom": 0.83,
+  "minZoom": 0.03,
+  "zoomSmoothing": 0.05,
+  "instantZoomIncrement": 0.1,
+  "defaultZoomLevel": 0.23,
+  "zoomSpeed": 0.5,
+  "enableZoomSound": false
+}

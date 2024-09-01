@@ -1,9 +1,11 @@
 package elias.zoom.client;
 
+import elias.zoom.client.config.ZoomModConfig;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.TitleScreen;
 import net.minecraft.client.option.KeyBinding;
@@ -16,33 +18,15 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.Objects;
-import java.util.Properties;
 
 public class ZoomModClient implements ClientModInitializer {
-
-    private static final String CONFIG_DIR = new File("").getAbsolutePath() + "/WAIZA-Config";
-    private static final String CONFIG_FILE = CONFIG_DIR + "/config.properties";
 
     private static boolean CHECKED_KEYBINDING = false;
     private static boolean currentlyZoomed;
     private static KeyBinding zoomKeyBinding;
     private static boolean originalSmoothCameraEnabled;
     private static final MinecraftClient mc = MinecraftClient.getInstance();
-
-    private static double ZOOM_INCREMENT;
-    private static double MAX_ZOOM;
-    private static double MIN_ZOOM;
-    private static double ZOOM_SMOOTHING;
-    private static double INSTANT_ZOOM_INCREMENT;
-    private static double DEFAULT_ZOOM_LEVEL;
-    private static double ZOOM_SPEED;
-
-    private static boolean ENABLE_ZOOM_SOUND;
 
     private static double targetZoomLevel;
     private static double zoomLevel;
@@ -51,9 +35,10 @@ public class ZoomModClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        createConfigIfNotExist();
-        loadConfig();
+        // Load configuration
+        ZoomModConfig.loadConfig();
 
+        // Register key binding
         zoomKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.zoom",
                 InputUtil.Type.KEYSYM,
@@ -63,6 +48,7 @@ public class ZoomModClient implements ClientModInitializer {
         currentlyZoomed = false;
         originalSmoothCameraEnabled = false;
 
+        // Check key binding on title screen
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             if (!CHECKED_KEYBINDING && screen instanceof TitleScreen) {
                 checkKeyBinding(zoomKeyBinding);
@@ -70,68 +56,17 @@ public class ZoomModClient implements ClientModInitializer {
             }
         });
 
+        // Update zoom on client tick
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player != null) {
                 updateZoom();
                 manageSmoothCamera();
             }
         });
-    }
 
-    private void createConfigIfNotExist() {
-        File configDir = new File(CONFIG_DIR);
-        File configFile = new File(CONFIG_FILE);
-
-        if (!configDir.exists()) {
-            configDir.mkdir();
-        }
-
-        if (!configFile.exists()) {
-            try {
-                configFile.createNewFile();
-                Properties props = new Properties();
-
-                // Set default values
-                props.setProperty("zoom_increment", "0.05");
-                props.setProperty("max_zoom", "0.83");
-                props.setProperty("min_zoom", "0.03");
-                props.setProperty("zoom_smoothing", "0.05");
-                props.setProperty("instant_zoom_increment", "0.1");
-                props.setProperty("default_zoom_level", "0.23");
-                props.setProperty("zoom_speed", "0.5"); // Default zoom speed
-                props.setProperty("enable_zoom_sound", "false"); // Default zoom sound disable
-
-                FileWriter writer = new FileWriter(configFile);
-                props.store(writer, "ZoomMod Configuration");
-                writer.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void loadConfig() {
-        Properties props = new Properties();
-
-        try {
-            FileReader reader = new FileReader(CONFIG_FILE);
-            props.load(reader);
-            reader.close();
-
-            // Load properties
-            ZOOM_INCREMENT = Double.parseDouble(props.getProperty("zoom_increment", "0.05"));
-            MAX_ZOOM = Double.parseDouble(props.getProperty("max_zoom", "0.83"));
-            MIN_ZOOM = Double.parseDouble(props.getProperty("min_zoom", "0.03"));
-            ZOOM_SMOOTHING = Double.parseDouble(props.getProperty("zoom_smoothing", "0.05"));
-            INSTANT_ZOOM_INCREMENT = Double.parseDouble(props.getProperty("instant_zoom_increment", "0.1"));
-            DEFAULT_ZOOM_LEVEL = Double.parseDouble(props.getProperty("default_zoom_level", "0.23"));
-            ZOOM_SPEED = Double.parseDouble(props.getProperty("zoom_speed", "0.5")); // Load zoom speed
-            ENABLE_ZOOM_SOUND = Boolean.parseBoolean(props.getProperty("enable_zoom_sound", "true")); // Load zoom sound setting
-
-            targetZoomLevel = DEFAULT_ZOOM_LEVEL;
-            zoomLevel = targetZoomLevel;
-        } catch (IOException e) {
-            e.printStackTrace();
+        // Register config screen with Mod Menu
+        if (FabricLoader.getInstance().isModLoaded("modmenu")) {
+            new ModMenuIntegration(); // Initialize ModMenuIntegration to register the config screen
         }
     }
 
@@ -155,8 +90,7 @@ public class ZoomModClient implements ClientModInitializer {
                 Text.of(title),
                 Text.of(description)
         );
-        MinecraftClient client = MinecraftClient.getInstance();
-        ToastManager toastManager = client.getToastManager();
+        ToastManager toastManager = mc.getToastManager();
         toastManager.add(toast);
     }
 
@@ -169,14 +103,14 @@ public class ZoomModClient implements ClientModInitializer {
     }
 
     public static void zoomIn() {
-        if (zoomLevel < MAX_ZOOM) {
-            targetZoomLevel = Math.min(targetZoomLevel + INSTANT_ZOOM_INCREMENT, MAX_ZOOM);
+        if (zoomLevel < ZoomModConfig.maxZoom) {
+            targetZoomLevel = Math.min(targetZoomLevel + ZoomModConfig.instantZoomIncrement, ZoomModConfig.maxZoom);
         }
     }
 
     public static void zoomOut() {
-        if (zoomLevel > MIN_ZOOM) {
-            targetZoomLevel = Math.max(targetZoomLevel - INSTANT_ZOOM_INCREMENT, MIN_ZOOM);
+        if (zoomLevel > ZoomModConfig.minZoom) {
+            targetZoomLevel = Math.max(targetZoomLevel - ZoomModConfig.instantZoomIncrement, ZoomModConfig.minZoom);
         }
     }
 
@@ -185,15 +119,15 @@ public class ZoomModClient implements ClientModInitializer {
 
         // Handle zoom level change based on key press state
         if (isPressed && !keyPressedLastFrame) {
-            targetZoomLevel = Math.min(targetZoomLevel + ZOOM_INCREMENT, MAX_ZOOM);
-            if (ENABLE_ZOOM_SOUND) playZoomSound(); // Play zoom in sound
+            targetZoomLevel = Math.min(targetZoomLevel + ZoomModConfig.zoomIncrement, ZoomModConfig.maxZoom);
+            if (ZoomModConfig.enableZoomSound) playZoomSound(); // Play zoom in sound
         } else if (!isPressed && keyPressedLastFrame) {
             // Reset to default zoom level when key is released
-            targetZoomLevel = DEFAULT_ZOOM_LEVEL;
+            targetZoomLevel = ZoomModConfig.defaultZoomLevel;
         }
 
         // Apply smoothing effect to the zoom level
-        double zoomStep = ZOOM_SMOOTHING * ZOOM_SPEED; // Apply zoom speed multiplier
+        double zoomStep = ZoomModConfig.zoomSmoothing * ZoomModConfig.zoomSpeed; // Apply zoom speed multiplier
         if (zoomLevel < targetZoomLevel) {
             zoomLevel = Math.min(zoomLevel + zoomStep, targetZoomLevel);
         } else if (zoomLevel > targetZoomLevel) {
@@ -215,7 +149,6 @@ public class ZoomModClient implements ClientModInitializer {
             );
         }
     }
-
 
     public static void manageSmoothCamera() {
         if (zoomStarting()) {
